@@ -23,14 +23,15 @@ given inverses: matrix indexed by [int(1..n)] of int(1..n)
 
 $ Multiplication table, as table and tuples
 given multable: matrix indexed by [int(1..n), int(1..n)] of int(1..n)
-given multuples: matrix indexed by [int(1..k2), int(1..3)] of int(1..n)
+given multuples: matrix indexed by [int(1..n*n), int(1..3)] of int(1..n)
 
 $ x*y^-1, as table and tuples
 given mulinvtable: matrix indexed by [int(1..n), int(1..n)] of int(1..n)
-given mulinvtuples: matrix indexed by [int(1..k1), int(1..3)] of int(1..n)
+given mulinvtuples: matrix indexed by [int(1..n*n), int(1..3)] of int(1..n)
 
 $ List of symmetries
-given syms: matrix indexed by [int(1..symsize), int(1..n)] of int(1..n)
+given symsize: int
+given syms: matrix indexed by [int(1..symsize),int(1..n)] of int(1..n)
 
 $ The EDF, expressed as a list of lists
 find edf: matrix indexed by [int(1..setnum), int(1..setsize)] of int(1..n)
@@ -46,7 +47,7 @@ such that
 
 $ Require that edf and boolrep represent the same EDF
 forAll s : int(1..setnum). (
-sum(boolrep[s,..]) = setsize /\
+sum([toInt(x) | x <- boolrep[s,..]]) = setsize /\
  forAll i : int(1..n). (boolrep[s,i] <-> exists j : int(1..setsize). edf[s,j]=i)
 ),
 
@@ -69,7 +70,7 @@ forAll i : int(1..setnum-1). edf[i,1] < edf[i+1,1],
 $ Now set up the 'edfmap', this makes a variable 'edfmap[p1,p2,q1,q2]'
 $ which is equal to x*y^-1, where x is the p2th element of the p1st set
 $ and y is the q2th element of the q1th set
-forAll p1 : int(1..setnum). forAll q1 : int(1..setnum). p1 != q1 ->
+forAll p1 : int(1..setnum). forAll q1 : int(1..setnum).
 (
     (    forAll p2 : int(1..setsize). forAll q2 : int(1..setsize).
         table([edf[p1,p2],edf[q1,q2],edfmap[p1,p2,q1,q2]], mulinvtuples)

@@ -1,19 +1,40 @@
+LoadPackage("json");
+LoadPackage("images");
+
 # Generate the elements of 'g' with a "nice"
 # ordering:
 # * Cyclic groups are ordered in the "natural" way
 # * The identity always comes first
 OrderedElements := function(g)
-    local l,p;
-    l := Elements(g);
-    if IsCyclic(g) then
-        p := First(l, x -> Order(x)=Size(g));
-        l := List([0..Size(g)-1], i -> p^i);
-    fi;
-    Assert(0, Order(l[1])=1);
-    Assert(0, Set(l)=Set(g));
+    local l,p, eles, maxorder, newe, newloop;
+    l := [];
+    eles := Elements(g);
+    # First find the identity:
+    Add(l, First(eles, x -> Order(x) = 1));
+    
+    # Remove elements not used
+    eles := Filtered(eles, x -> not(x in l));
+
+    while not IsEmpty(eles) do
+        maxorder := PositionMaximum(eles, Order);
+        newe := eles[maxorder];
+        newloop := Filtered(List([1..Order(newe)-1], x -> newe^x), y -> y in eles);
+        Append(l, newloop);
+        eles := Filtered(eles, x -> not(x in l));
+    od;
+
+    Assert(0, SortedList(l) = SortedList(Elements(g)));
     return l;
 end;
 
+# Map to an fp group (for ease of reading)
+FpSmallGroupIso := function(g)
+    local map, map2;
+    map := IsomorphismFpGroup(g);
+    map2 := IsomorphismSimplifiedFpGroup(Image(map));
+    #return rec(grp := Image(map2, Image(map)), image := {x} -> Image(map2, Image(map, x)));
+    return rec(grp := Image(map), image := {x} ->  Image(map, x));
+end;
 
 EDFSymGroup := function(l,g)
     local gens,n;
@@ -52,11 +73,11 @@ SomeElements := function(group)
 end;
 		
 
-CollectSyms := function(l)
+CollectSyms := function(l, limit)
 	local g, group, syms;
 	g := Group(l);
     group := EDFSymGroup(l,g);
-	if Size(group) <= 2500 then
+	if Size(group) <= limit then
 		syms := Elements(group);
 	else
 		syms := SomeElements(group);
@@ -85,4 +106,116 @@ BuildTables := function(ordelements)
                        {x,y} ->  [x,y,r.mulinvtable[x][y]]);
     
     return r;
+end;
+
+
+checkSEDF := function(s, l)
+    local i,j, gather, check;
+    for i in [1..Length(s)] do
+        gather := [];
+        for j in [1..Length(s)] do
+            if i <> j then
+                Append(gather, ListX(s[i], s[j], {x,y} -> l[x]*(l[y]^-1)));
+            fi;
+        od;
+        #Print("County: ",Collected(gather),"\n");
+        for check in l{[2..Length(l)]} do
+            if Size(Filtered(gather, x -> (x=check))) <> Size(Filtered(gather, x -> (x=l[2]))) then
+                Print("Wrong number of elements...",check,"\n");
+                return false;
+            fi;
+        od;
+        if Size(Filtered(gather, x -> (x=l[1]))) <> 0 then
+                Print("Found an identity\n");
+            return false;
+        fi;
+    od;
+    return true;
+end;
+
+
+checkEDF := function(s, l)
+    local i,j, gather, check, lambda, collect;
+    gather := [];
+    for i in [1..Length(s)] do
+        for j in [1..Length(s)] do
+            if i <> j then
+                Append(gather, ListX(s[i], s[j], {x,y} -> l[x]*(l[y]^-1)));
+            fi;
+        od;
+    od;
+
+    lambda := Length(gather)/(Length(l)-1);
+
+    collect := Collected(gather);
+    if Length(collect) <> Length(l)-1 then
+        return false;
+    fi;
+
+    if not ForAll(collect, x -> x[2] = lambda) then
+        return false;
+    fi;
+
+    if Size(Filtered(gather, x -> (x=l[1]))) <> 0 then
+        return false;
+    fi;
+    return true;
+end; 
+
+# This is a horrible function which reads Conjure's output and turns it into GAP
+readConjure := function(filename)
+    local tf, sols;
+    sols := [];
+    tf := InputTextFile(filename);
+    while ReadLine(tf) <> fail do
+        Add(sols, JsonStreamToGap(tf));
+        ReadLine(tf);
+    od;
+    CloseStream(tf);
+    return sols;
+end;
+
+
+testname := "groups/conjure-output/model000001-edf_16_12_3_5_12.solutions.json";
+readSolutions := function(name)
+    local split, args, grp, elements, sols, s, syms;
+    split := SplitString(name, "-_.");
+    args := split{[Length(split)-7..Length(split)-2]};
+    grp := SmallGroup(Int(args[2]), Int(args[3]));
+    elements := OrderedElements(grp);
+    sols := readConjure(name);
+    sols := List(sols, x -> x.edf);
+    for s in sols do
+        if args[1] = "sedf" then
+            if not(checkSEDF(s, elements)) then
+                Print("Invalid sedf!: ", s.edf);
+            fi;
+        else
+            if not(checkEDF(s, elements)) then
+                Print("Invalid edf!: ", s.edf);
+            fi;
+        fi;
+    od;
+
+    syms := EDFSymGroup(elements, grp);
+
+    return rec(grp := grp, name := name, elements := elements, sols := sols, mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
+end;
+
+readAllSolutions := function(dir)
+    local contents;
+    contents := SortedList(DirectoryContents(dir));
+    contents := Filtered(contents, x -> EndsWith(x, ".json"));
+    return List(contents, x -> readSolutions(Concatenation(dir, "/", x)));
+end;
+
+nicePrint := function(sol, maxprint)
+    local fpmap, edf;
+    fpmap := FpSmallGroupIso(sol.grp);
+    Assert(0, Size(fpmap.grp) = Size(sol.grp));
+    Print(StructureDescription(fpmap.grp), " -- Size: ", Size(fpmap.grp), " -- ", RelatorsOfFpGroup(fpmap.grp), "\n");
+    for edf in sol.mins{[1..Minimum(Length(sol.mins), maxprint)]} do
+        Print(List(edf, s -> List(s, y -> fpmap.image(sol.elements[y]))),"\n");
+    od;
+    Print("\n");
 end;

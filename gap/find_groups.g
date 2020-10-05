@@ -34,26 +34,27 @@ outputEDFEssenceFile := function(filename, ordgrp, tables, symlist, setsize, num
 	local output;
 	output := OutputTextFile( filename, false );
 	SetPrintFormattingStatus(output, false);
-	PrintToFormatted(output, "letting n = {}\n", Length(ordgrp));
-	PrintToFormatted(output, "letting inverses = {}\n", tables.inverses);
-	PrintToFormatted(output, "letting multable = {}\n", tables.multable);
-	PrintToFormatted(output, "letting mulinvtable = {}\n", tables.mulinvtable);
-	PrintToFormatted(output, "letting multuples = {}\n", tables.multuples);
-	PrintToFormatted(output, "letting mulinvtuples = {}\n", tables.mulinvtuples);
-	PrintToFormatted(output, "letting setsize = {}\n", setsize);
-	PrintToFormatted(output, "letting setnum = {}\n", numsets);
-	PrintToFormatted(output, "letting dups = {}\n", lambda);
+	PrintToFormatted(output, "letting n be {}\n", Length(ordgrp));
+	PrintToFormatted(output, "letting inverses be {}\n", tables.inverses);
+	PrintToFormatted(output, "letting multable be {}\n", tables.multable);
+	PrintToFormatted(output, "letting mulinvtable be {}\n", tables.mulinvtable);
+	PrintToFormatted(output, "letting multuples be {}\n", tables.multuples);
+	PrintToFormatted(output, "letting mulinvtuples be {}\n", tables.mulinvtuples);
+	PrintToFormatted(output, "letting setsize be {}\n", setsize);
+	PrintToFormatted(output, "letting setnum be {}\n", numsets);
+	PrintToFormatted(output, "letting dups be {}\n", lambda);
 	# The whole 'List(l, x -> x)' gets rid of any range notation, which savilerow doesn't understand
-	PrintToFormatted(output, "letting syms = {}\n", List(symlist, l -> List(l, x -> x)));
-	PrintToFormatted(output, "letting makeEDF = {}\n", not sedf);
-	PrintToFormatted(output, "letting makeSEDF = {}\n", sedf);
+	PrintToFormatted(output, "letting symsize be {}\n", Size(symlist));
+	PrintToFormatted(output, "letting syms be {}\n", List(symlist, l -> List(l, x -> x)));
+	PrintToFormatted(output, "letting makeEDF be {}\n", not sedf);
+	PrintToFormatted(output, "letting makeSEDF be {}\n", sedf);
 	
 	CloseStream(output);
 	end;
 
 makeSEDF := false;
 
-for n in [2..30] do
+for n in [2..21] do
 
 	options :=  validLambdas(n, makeSEDF);
 	if IsEmpty(options) then
@@ -65,7 +66,7 @@ for n in [2..30] do
 		G := SmallGroup(n, i);
 		ordG := OrderedElements(G);
 
-		symlist := CollectSyms(ordG);
+		symlist := CollectSyms(ordG, 1000);
 		
 		for option in options do
 			numsets := option.numsets;
@@ -86,7 +87,12 @@ for n in [2..30] do
 			# Remove spaces from name, e.g. "C2 x C4" => "C2xC4"
 			RemoveCharacters(name," ");
 
-			filename := StringFormatted("groups/{}_{}_{}_{}_{}.param", n, i, setsize, numsets, lambda);
+			if makeSEDF then
+				type := "sedf";
+			else
+				type := "edf";
+			fi;
+			filename := StringFormatted("groups/{}_{}_{}_{}_{}_{}.param", type, n, i, setsize, numsets, lambda);
 			outputEDFEssenceFile(filename, ordG, tables, symlist, setsize, numsets, lambda, makeSEDF);
 		od;
 	od;
