@@ -8,7 +8,7 @@ LoadPackage("images");
 OrderedElements := function(g)
     local l,p, eles, maxorder, newe, newloop;
     l := [];
-    eles := Elements(g);
+    eles := Set(Elements(g));
     # First find the identity:
     Add(l, First(eles, x -> Order(x) = 1));
     
@@ -164,12 +164,14 @@ end;
 
 # This is a horrible function which reads Conjure's output and turns it into GAP
 readConjure := function(filename)
-    local tf, sols;
+    local tf, sols, str;
     sols := [];
-    tf := InputTextFile(filename);
-    while ReadLine(tf) <> fail do
+    str := Chomp(StringFile(filename));
+
+    tf := InputTextString(str);
+    
+    while not IsEndOfStream(tf) do
         Add(sols, JsonStreamToGap(tf));
-        ReadLine(tf);
     od;
     CloseStream(tf);
     return sols;
@@ -198,8 +200,8 @@ readSolutions := function(name)
     od;
 
     syms := EDFSymGroup(elements, grp);
-
-    return rec(grp := grp, name := name, elements := elements, sols := sols, mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
+    PrintFormatted("Read {} from {}\n", Length(sols), name);
+    return rec(grp := grp, grpdef := [Int(args[2]), Int(args[3])], name := name, elements := elements, sols := sols, mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
 end;
 
 readAllSolutions := function(dir)
@@ -218,4 +220,38 @@ nicePrint := function(sol, maxprint)
         Print(List(edf, s -> List(s, y -> fpmap.image(sol.elements[y]))),"\n");
     od;
     Print("\n");
+end;
+
+
+Goodelements := function(g)
+    local l,p;
+    l := Elements(g);
+    if IsCyclic(g) then
+        p := First(l, x -> Order(x)=Size(g));
+        l := List([0..Size(g)-1], i -> p^i);
+    fi;
+    Assert(0, Order(l[1])=1);
+    Assert(0, Set(l)=Set(g));
+    return l;
+end;
+
+ValidateSEDFDatabase := function(data)
+    local d, grp, nicegrp, s, lister, found;
+
+    for d in data do
+        grp := SmallGroup(d.grp[1],d.grp[2]);
+        for s in d.sedfs do
+            found := false;
+            for lister in [List, OrderedElements, Goodelements] do
+                nicegrp := lister(grp);
+                if checkSEDF(s, nicegrp) then
+                    found := true;
+                fi;
+            od;
+
+            if not found then
+                Print("Invalid SEDF in ",d.grp," : ",s,"\n");
+            fi;
+        od;
+    od;
 end;

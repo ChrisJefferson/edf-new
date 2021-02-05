@@ -52,9 +52,12 @@ outputEDFEssenceFile := function(filename, ordgrp, tables, symlist, setsize, num
 	CloseStream(output);
 	end;
 
-makeSEDF := false;
 
-for n in [2..21] do
+
+builder := function()
+makeSEDF :=  false;
+
+for n in [2..16] do
 
 	options :=  validLambdas(n, makeSEDF);
 	if IsEmpty(options) then
@@ -74,9 +77,10 @@ for n in [2..21] do
 			lambda := option.lambda;
 
 			# Put any groups you want to skip here
-			if IsAbelian(G) then
-				continue;
-			fi;
+			#if IsAbelian(G) then
+			#if numsets <> 2 then
+			#	continue;
+			#fi;
 
 			Print(n,":",i,":",numsets,":",setsize,"!",lambda,"\n");
 
@@ -97,4 +101,20 @@ for n in [2..21] do
 		od;
 	od;
 od;
+end;
 
+buildKnown := function()
+	for grp in  Set(sedfDatabase, x -> x.grp) do
+		options := validLambdas(grp[1], true);
+		G := SmallGroup(grp[1], grp[2]);
+		ordG := OrderedElements(G);
+
+		for o in options do
+		    if not ForAny(sedfDatabase, {x} -> x.grp = grp and ForAny(x.sedfs, {y} -> Length(y) = o.numsets and Length(y[1]) = o.setsize)) then
+				continue;
+			fi;
+			filename := StringFormatted("param-sedf/sedf_{}_{}_{}_{}_{}.param", grp[1], grp[2], o.setsize, o.numsets, o.lambda);
+			outputEDFEssenceFile(filename, ordG, BuildTables(ordG), CollectSyms(ordG, 1000), o.setsize, o.numsets, o.lambda, true);
+		od;
+	od;
+end;
