@@ -200,7 +200,7 @@ readSolutions := function(name)
     od;
 
     syms := EDFSymGroup(elements, grp);
-    return rec(grp := [Int(args[2]), Int(args[3])], name := name, numsets := Length(sols[1]), setsize := Length(sols[1][1]), mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
+    return rec(type := args[1], grp := [Int(args[2]), Int(args[3])], name := name, numsets := Length(sols[1]), setsize := Length(sols[1][1]), mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
 end;
 
 readAllSolutions := function(dir)
