@@ -203,10 +203,10 @@ readSolutions := function(name)
     return rec(type := args[1], grp := [Int(args[2]), Int(args[3])], name := name, numsets := Length(sols[1]), setsize := Length(sols[1][1]), mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
 end;
 
-readAllSolutions := function(dir)
+readAllSolutions := function(dir, ending)
     local contents;
     contents := SortedList(DirectoryContents(dir));
-    contents := Filtered(contents, x -> EndsWith(x, ".json"));
+    contents := Filtered(contents, x -> EndsWith(x, ending));
     return List(contents, x -> readSolutions(Concatenation(dir, "/", x)));
 end;
 
@@ -219,6 +219,32 @@ cleanAllSolutions := function(dir)
         FileString(Concatenation(dir,"/", file, ".cleaned"), GapToJsonString(sols));
         PrintFormatted("Done {}\n", file);
     od;
+end;
+
+EDFDatabase := [];
+
+loadDirIntoDatabase := function(dir)
+    local name, data;
+    for name in Filtered(SortedList(DirectoryContents(dir)), x -> EndsWith(x, ".json.cleaned")) do
+        data := JsonStringToGap(StringFile(Concatenation(dir, "/",name)));
+        data.grpobj := SmallGroup(data.grp[1], data.grp[2]);
+        data.elements := OrderedElements(data.grpobj);
+        if data.type = "sedf" then
+            if not ForAll(data.mins, x -> checkSEDF(x, data.elements)) then
+                Print("Fatal Error : Invalid SEDF Database data ", name, "\n");
+            fi;
+        else
+            if not ForAll(data.mins, x -> checkEDF(x, data.elements)) then
+                Print("Fatal Error : Invalid EDF Database data ", name, "\n");
+            fi;
+        fi;
+        Add(EDFDatabase, data);
+    od;
+end;
+
+ReadDatabase := function()
+    loadDirIntoDatabase("database/sedf");
+    loadDirIntoDatabase("database/edf");
 end;
 
 nicePrint := function(sol, maxprint)
