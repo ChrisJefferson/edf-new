@@ -55,6 +55,8 @@ outputEDFEssenceFile := function(filename, ordgrp, tables, symlist, setsize, num
 
 
 builder := function()
+local makeSEDF, n, options, i, G, ordG, symlist, option, tables,
+	  numsets, setsize, lambda, name, table, type, filename;
 makeSEDF :=  false;
 
 for n in [2..16] do
@@ -104,6 +106,7 @@ od;
 end;
 
 buildKnown := function()
+	local grp, options, G, ordG, o, filename;
 	for grp in  Set(sedfDatabase, x -> x.grp) do
 		options := validLambdas(grp[1], true);
 		G := SmallGroup(grp[1], grp[2]);

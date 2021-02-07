@@ -200,8 +200,7 @@ readSolutions := function(name)
     od;
 
     syms := EDFSymGroup(elements, grp);
-    PrintFormatted("Read {} from {}\n", Length(sols), name);
-    return rec(grp := grp, grpdef := [Int(args[2]), Int(args[3])], name := name, elements := elements, sols := sols, mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
+    return rec(grp := [Int(args[2]), Int(args[3])], name := name, numsets := Length(sols[1]), setsize := Length(sols[1][1]), mins := Set(sols, x -> MinimalImage(syms, x, OnSetsSets)));
 end;
 
 readAllSolutions := function(dir)
@@ -209,6 +208,17 @@ readAllSolutions := function(dir)
     contents := SortedList(DirectoryContents(dir));
     contents := Filtered(contents, x -> EndsWith(x, ".json"));
     return List(contents, x -> readSolutions(Concatenation(dir, "/", x)));
+end;
+
+cleanAllSolutions := function(dir)
+    local contents, file, sols;
+    contents := SortedList(DirectoryContents(dir));
+    contents := Filtered(contents, x -> EndsWith(x, ".json"));
+    for file in contents do
+        sols := readSolutions(Concatenation(dir, "/", file));
+        FileString(Concatenation(dir,"/", file, ".cleaned"), GapToJsonString(sols));
+        PrintFormatted("Done {}\n", file);
+    od;
 end;
 
 nicePrint := function(sol, maxprint)
