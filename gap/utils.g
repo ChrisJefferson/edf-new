@@ -238,11 +238,13 @@ loadDirIntoDatabase := function(dir)
                 Print("Fatal Error : Invalid EDF Database data ", name, "\n");
             fi;
         fi;
+
+        data.edfs := List(data.mins, x -> List(x, y -> List(y, z -> data.elements[z])));
         Add(EDFDatabase, data);
     od;
 end;
 
-ReadDatabase := function()
+ReadEDFDatabase := function()
     loadDirIntoDatabase("database/sedf");
     loadDirIntoDatabase("database/edf");
 end;

@@ -105,19 +105,19 @@ for n in [2..16] do
 od;
 end;
 
-buildKnown := function()
-	local grp, options, G, ordG, o, filename;
-	for grp in  Set(sedfDatabase, x -> x.grp) do
-		options := validLambdas(grp[1], true);
-		G := SmallGroup(grp[1], grp[2]);
-		ordG := OrderedElements(G);
-
-		for o in options do
-		    if not ForAny(sedfDatabase, {x} -> x.grp = grp and ForAny(x.sedfs, {y} -> Length(y) = o.numsets and Length(y[1]) = o.setsize)) then
-				continue;
-			fi;
-			filename := StringFormatted("param-sedf/sedf_{}_{}_{}_{}_{}.param", grp[1], grp[2], o.setsize, o.numsets, o.lambda);
-			outputEDFEssenceFile(filename, ordG, BuildTables(ordG), CollectSyms(ordG, 1000), o.setsize, o.numsets, o.lambda, true);
-		od;
-	od;
-end;
+#buildKnown := function()
+#	local grp, options, G, ordG, o, filename;
+#	for grp in  Set(sedfDatabase, x -> x.grp) do
+#		options := validLambdas(grp[1], true);
+#		G := SmallGroup(grp[1], grp[2]);
+#		ordG := OrderedElements(G);
+#
+#		for o in options do
+#		    if not ForAny(sedfDatabase, {x} -> x.grp = grp and ForAny(x.sedfs, {y} -> Length(y) = o.numsets and Length(y[1]) = o.setsize)) then
+#				continue;
+#			fi;
+#			filename := StringFormatted("param-sedf/sedf_{}_{}_{}_{}_{}.param", grp[1], grp[2], o.setsize, o.numsets, o.lambda);
+#			outputEDFEssenceFile(filename, ordG, BuildTables(ordG), CollectSyms(ordG, 1000), o.setsize, o.numsets, o.lambda, true);
+#		od;
+#	od;
+#end;
