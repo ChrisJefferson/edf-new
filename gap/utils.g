@@ -228,6 +228,7 @@ loadDirIntoDatabase := function(dir)
     for name in Filtered(SortedList(DirectoryContents(dir)), x -> EndsWith(x, ".json.cleaned")) do
         data := JsonStringToGap(StringFile(Concatenation(dir, "/",name)));
         data.grpobj := SmallGroup(data.grp[1], data.grp[2]);
+        data.grpname := StructureDescription(data.grpobj);
         data.elements := OrderedElements(data.grpobj);
         if data.type = "sedf" then
             if not ForAll(data.mins, x -> checkSEDF(x, data.elements)) then
@@ -245,6 +246,9 @@ loadDirIntoDatabase := function(dir)
 end;
 
 ReadEDFDatabase := function()
+    if Length(EDFDatabase) > 0 then
+        return;
+    fi;
     loadDirIntoDatabase("database/sedf");
     loadDirIntoDatabase("database/edf");
 end;
