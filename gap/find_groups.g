@@ -34,6 +34,7 @@ outputEDFEssenceFile := function(filename, ordgrp, tables, symlist, setsize, num
 	local output;
 	output := OutputTextFile( filename, false );
 	SetPrintFormattingStatus(output, false);
+	PrintToFormatted(output, "language ESSENCE' 1.0\n");
 	PrintToFormatted(output, "letting n be {}\n", Length(ordgrp));
 	PrintToFormatted(output, "letting inverses be {}\n", tables.inverses);
 	PrintToFormatted(output, "letting multable be {}\n", tables.multable);
@@ -59,7 +60,7 @@ local makeSEDF, n, options, i, G, ordG, symlist, option, tables,
 	  numsets, setsize, lambda, name, table, type, filename;
 makeSEDF :=  false;
 
-for n in [2..16] do
+for n in [2..200] do
 
 	options :=  validLambdas(n, makeSEDF);
 	if IsEmpty(options) then
@@ -77,7 +78,10 @@ for n in [2..16] do
 			numsets := option.numsets;
 			setsize := option.setsize;
 			lambda := option.lambda;
-
+			
+			if lambda <> 1 or numsets <> 2 or IsCyclic(G) then
+				continue;
+			fi;
 			# Put any groups you want to skip here
 			#if IsAbelian(G) then
 			#if numsets <> 2 then
