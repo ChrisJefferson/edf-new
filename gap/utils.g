@@ -196,6 +196,7 @@ readSolutions := function(name)
     local split, args, grp, elements, sols, s, syms;
     split := SplitString(name, "-_.");
     args := split{[Length(split)-8..Length(split)-2]};
+    Assert(0, args[1] in ["edf", "sedf"]);
     grp := SmallGroup(Int(args[2]), Int(args[3]));
     elements := OrderedElements(grp);
     sols := readConjure(name);
