@@ -177,16 +177,30 @@ readConjure := function(filename)
     return sols;
 end;
 
+recToList := function(r)
+    local l, i;
+    # base case
+    if not IsRecord(r) then
+        return r;
+    fi;
+    l := [];
+    for i in RecNames(r) do
+        l[Int(i)] := recToList(r.(i));
+    od;
+    return l;
+end;
+
 
 testname := "groups/conjure-output/model000001-edf_16_12_3_5_12.solutions.json";
 readSolutions := function(name)
     local split, args, grp, elements, sols, s, syms;
     split := SplitString(name, "-_.");
-    args := split{[Length(split)-7..Length(split)-2]};
+    args := split{[Length(split)-8..Length(split)-2]};
     grp := SmallGroup(Int(args[2]), Int(args[3]));
     elements := OrderedElements(grp);
     sols := readConjure(name);
     sols := List(sols, x -> x.edf);
+    sols := List(sols, recToList);
     for s in sols do
         if args[1] = "sedf" then
             if not(checkSEDF(s, elements)) then
@@ -234,10 +248,14 @@ loadDirIntoDatabase := function(dir)
             if not ForAll(data.mins, x -> checkSEDF(x, data.elements)) then
                 Print("Fatal Error : Invalid SEDF Database data ", name, "\n");
             fi;
+            data.lambda := (data.setsize * data.setsize * (data.numsets - 1))/(data.grp[1]-1);
+            Assert(0, IsInt(data.lambda));
         else
             if not ForAll(data.mins, x -> checkEDF(x, data.elements)) then
                 Print("Fatal Error : Invalid EDF Database data ", name, "\n");
             fi;
+            data.lambda := (data.setsize * data.setsize * data.numsets * (data.numsets - 1))/(data.grp[1]-1);
+            Assert(0, IsInt(data.lambda));
         fi;
 
         data.edfs := List(data.mins, x -> List(x, y -> List(y, z -> data.elements[z])));
