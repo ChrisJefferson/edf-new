@@ -79,7 +79,7 @@ for n in [2..200] do
 			setsize := option.setsize;
 			lambda := option.lambda;
 			
-			if lambda <> 1 or numsets <> 2 or IsCyclic(G) then
+			if lambda <> 1 then
 				continue;
 			fi;
 			# Put any groups you want to skip here
