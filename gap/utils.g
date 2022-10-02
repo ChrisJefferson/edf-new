@@ -193,10 +193,11 @@ end;
 
 testname := "groups/conjure-output/model000001-edf_16_12_3_5_12.solutions.json";
 readSolutions := function(name)
-    local split, args, grp, elements, sols, s, syms;
+    local split, args, grp, elements, sols, s, syms, pos;
     split := SplitString(name, "-_.");
-    args := split{[Length(split)-8..Length(split)-2]};
-    Assert(0, args[1] in ["edf", "sedf"]);
+    pos := PositionProperty(split, x -> x in ["edf","sedf"]);
+    Assert(0, IsInt(pos));
+    args := split{[pos..pos+5]};
     grp := SmallGroup(Int(args[2]), Int(args[3]));
     elements := OrderedElements(grp);
     sols := readConjure(name);
